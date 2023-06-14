@@ -34,7 +34,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var insertCommand = uxRemap(uxHistory(uxTag(cli.Command{
+var insertCommand = uxCompression(uxRemap(uxHistory(uxTag(cli.Command{
 	Name:  "insert",
 	Usage: "insert content into an OCI image",
 	ArgsUsage: `--image <image-path>[:<tag>] [--opaque] <source> <target>
@@ -107,7 +107,7 @@ Some examples:
 		ctx.App.Metadata["--target-path"] = targetPath
 		return nil
 	},
-})))
+}))))
 
 func insert(ctx *cli.Context) error {
 	imagePath := ctx.App.Metadata["--image-path"].(string)
@@ -187,10 +187,18 @@ func insert(ctx *cli.Context) error {
 			history.CreatedBy = ctx.String("history.created_by")
 		}
 	}
+	var compressor = mutate.GzipCompressor
+	if ctx.IsSet("compression") {
+		comp, err := mutate.CompressorByName(ctx.String("compression"))
+		if err != nil {
+			return errors.Wrap(err, "add diff layer")
+		}
+		compressor = comp
+	}
 
 	// TODO: We should add a flag to allow for a new layer to be made
 	//       non-distributable.
-	if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, reader, history, mutate.GzipCompressor, nil); err != nil {
+	if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, reader, history, compressor, nil); err != nil {
 		return errors.Wrap(err, "add diff layer")
 	}
 

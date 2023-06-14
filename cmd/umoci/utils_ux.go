@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opencontainers/umoci/mutate"
 	"github.com/opencontainers/umoci/oci/casext"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -224,6 +225,35 @@ func uxRemap(cmd cli.Command) cli.Command {
 			Usage: "enable rootless command support",
 		},
 	}...)
+
+	return cmd
+}
+
+func uxCompression(cmd cli.Command) cli.Command {
+	cmd.Flags = append(cmd.Flags, []cli.Flag{
+		cli.StringFlag{
+			Name:  "compression",
+			Usage: "set the compression engine (noop, zstd, [gzip])",
+			Value: "gzip",
+		},
+	}...)
+	oldBefore := cmd.Before
+	cmd.Before = func(ctx *cli.Context) error {
+		// Verify and parse --compression.
+		if ctx.IsSet("compression") {
+			compression := ctx.String("compression")
+
+			_, err := mutate.CompressorByName(compression) // Verify compression value
+			if err != nil {
+				return err
+			}
+		}
+
+		if oldBefore != nil {
+			return oldBefore(ctx)
+		}
+		return nil
+	}
 
 	return cmd
 }

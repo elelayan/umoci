@@ -33,7 +33,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var rawAddLayerCommand = uxHistory(uxTag(cli.Command{
+var rawAddLayerCommand = uxCompression(uxHistory(uxTag(cli.Command{
 	Name:  "add-layer",
 	Usage: "add a layer archive verbatim to an image",
 	ArgsUsage: `--image <image-path>[:<tag>] <new-layer.tar>
@@ -64,7 +64,7 @@ only supports uncompressed archives.`,
 		ctx.App.Metadata["newlayer"] = ctx.Args().First()
 		return nil
 	},
-}))
+})))
 
 func rawAddLayer(ctx *cli.Context) error {
 	imagePath := ctx.App.Metadata["--image-path"].(string)
@@ -153,9 +153,18 @@ func rawAddLayer(ctx *cli.Context) error {
 		}
 	}
 
+	var compressor = mutate.GzipCompressor
+	if ctx.IsSet("compression") {
+		comp, err := mutate.CompressorByName(ctx.String("compression"))
+		if err != nil {
+			return errors.Wrap(err, "add diff layer")
+		}
+		compressor = comp
+	}
+
 	// TODO: We should add a flag to allow for a new layer to be made
 	//       non-distributable.
-	if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, newLayer, history, mutate.GzipCompressor, nil); err != nil {
+	if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, newLayer, history, compressor, nil); err != nil {
 		return errors.Wrap(err, "add diff layer")
 	}
 

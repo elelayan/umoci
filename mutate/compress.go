@@ -1,6 +1,7 @@
 package mutate
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -113,4 +114,17 @@ func (zs zstdCompressor) Compress(reader io.Reader) (io.ReadCloser, error) {
 
 func (zs zstdCompressor) MediaTypeSuffix() string {
 	return "zstd"
+}
+
+func CompressorByName(compressorName string) (Compressor, error) {
+	switch compressorName {
+	case "noop":
+		return NoopCompressor, nil
+	case "gzip":
+		return GzipCompressor, nil
+	case "zstd":
+		return ZstdCompressor, nil
+	default:
+		return nil, fmt.Errorf("Invalid compression name: %s", compressorName)
+	}
 }

@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   imported (with any `-dev` suffix stripped, as such a prefix causes havoc with
   verification tools -- ideally we would only ever use released versions of the
   spec but that's not always possible). #452
+- add a `--compression` flag to the `insert`, `repack` and `raw add-layer` subcommands,
+  to let one choose the compression engine (noop, zstd, **gzip**). #300
 
 ### Fixed ###
 - In 0.4.7, a performance regression was introduced as part of the

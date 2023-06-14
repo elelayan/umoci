@@ -34,7 +34,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var repackCommand = uxHistory(cli.Command{
+var repackCommand = uxCompression(uxHistory(cli.Command{
 	Name:  "repack",
 	Usage: "repacks an OCI runtime bundle into a reference",
 	ArgsUsage: `--image <image-path>[:<new-tag>] <bundle>
@@ -88,7 +88,7 @@ manifest and configuration information uses the new diff atop the old manifest.`
 		ctx.App.Metadata["bundle"] = ctx.Args().First()
 		return nil
 	},
-})
+}))
 
 func repack(ctx *cli.Context) error {
 	imagePath := ctx.App.Metadata["--image-path"].(string)
@@ -176,5 +176,13 @@ func repack(ctx *cli.Context) error {
 		mtreefilter.MaskFilter(maskedPaths),
 	}
 
-	return umoci.Repack(engineExt, tagName, bundlePath, meta, history, filters, ctx.Bool("refresh-bundle"), mutator)
+	var compressor = mutate.GzipCompressor
+	if ctx.IsSet("compression") {
+		comp, err := mutate.CompressorByName(ctx.String("compression"))
+		if err != nil {
+			return errors.Wrap(err, "parsing --compression")
+		}
+		compressor = comp
+	}
+	return umoci.Repack(engineExt, tagName, bundlePath, meta, history, filters, ctx.Bool("refresh-bundle"), mutator, compressor)
 }

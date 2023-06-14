@@ -54,9 +54,12 @@ func GenerateLayer(path string, deltas []mtree.InodeDelta, opt *RepackOptions) (
 	go func() (Err error) {
 		// Close with the returned error.
 		defer func() {
-			log.Warnf("could not generate layer: %v", Err)
-			// #nosec G104
-			_ = writer.CloseWithError(errors.Wrap(Err, "generate layer"))
+		    if (Err != nil) {
+		        // FIXME: why was the condition missing?
+                log.Warnf("could not generate layer: %v", Err)
+            }
+            // #nosec G104
+            _ = writer.CloseWithError(errors.Wrap(Err, "generate layer"))
 		}()
 
 		// We can't just dump all of the file contents into a tar file. We need

@@ -36,7 +36,7 @@ import (
 
 // Repack repacks a bundle into an image adding a new layer for the changed
 // data in the bundle.
-func Repack(engineExt casext.Engine, tagName string, bundlePath string, meta Meta, history *ispec.History, filters []mtreefilter.FilterFunc, refreshBundle bool, mutator *mutate.Mutator) error {
+func Repack(engineExt casext.Engine, tagName string, bundlePath string, meta Meta, history *ispec.History, filters []mtreefilter.FilterFunc, refreshBundle bool, mutator *mutate.Mutator, compressor mutate.Compressor) error {
 	mtreeName := strings.Replace(meta.From.Descriptor().Digest.String(), ":", "_", 1)
 	mtreePath := filepath.Join(bundlePath, mtreeName+".mtree")
 	fullRootfsPath := filepath.Join(bundlePath, layer.RootfsName)
@@ -114,7 +114,7 @@ func Repack(engineExt casext.Engine, tagName string, bundlePath string, meta Met
 
 		// TODO: We should add a flag to allow for a new layer to be made
 		//       non-distributable.
-		if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, reader, history, mutate.GzipCompressor, nil); err != nil {
+		if _, err := mutator.Add(context.Background(), ispec.MediaTypeImageLayer, reader, history, compressor, nil); err != nil {
 			return errors.Wrap(err, "add diff layer")
 		}
 	}
